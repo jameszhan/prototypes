@@ -63,7 +63,6 @@ var code = compile(ast);
 console.log(code);
 
 function interpret(node) {
-    console.log(node);
     switch (node.type) {
         case 'number':
             return +node.value;
