@@ -17,7 +17,7 @@ function buildAst(tokens) {
             if (left) {
                 sym = {children: [left], value: token, type: 'operator'};
             } else {
-                console.error('Syntax error at: ' + left + ', ' + sym.value);
+                console.error('Syntax error at: ' + left);
                 throw 'Syntax error at: ' + left;
             }
             right = tokens.shift();
@@ -58,31 +58,26 @@ function compile(node) {
     }
 }
 
+//var ast = parse('1+2-3+4-5+6');
 var ast = parse('1+2-3+4-5+6');
 var code = compile(ast);
 console.log(code);
 
-function interpret(node, ds) {
+function interpret(node) {
+    console.log(node);
     switch (node.type) {
         case 'number':
-            ds.push(parseInt(node.value));
-            break;
+            return +node.value;
         case 'operator':
-            interpret(node.children[1], ds);
-            interpret(node.children[0], ds);
-            console.log(ds);
-            console.log(node);
             if (node.value == '+') {
-                ds.push(ds.pop() + ds.pop());
+                return interpret(node.children[0]) + interpret(node.children[1]);
             } else {
-                ds.push(ds.pop() - ds.pop());
+                return interpret(node.children[0]) - interpret(node.children[1]);
             }
-            break;
         default:
             return "Unknown Node: " + node;
     }
 }
 
-var ds = [];
-interpret(ast, ds);
-console.log(ds.pop());
+var val = interpret(ast);
+console.log(val);
