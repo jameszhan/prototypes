@@ -58,7 +58,6 @@ function compile(node) {
     }
 }
 
-//var ast = parse('1+2-3+4-5+6');
 var ast = parse('1+2-3+4-5+6');
 var code = compile(ast);
 console.log(code);
