@@ -136,7 +136,6 @@ function parseDef(tuple) {
     return {type: 'def', pattern: doParse(elements[1]), value: doParse(elements[2])}
 }
 
-
 function parseAssign(tuple) {
     var elements = tuple.elements;
     if (elements.length != 3) {
@@ -154,7 +153,7 @@ function parseLambda(tuple) {
     if (params.type !== 'tuple') {
         throw new SyntaxError("incorrect format of parameters: " + params);
     }
-    paramNames = params.elements.map(function(param, i){
+    paramNames = params.elements.map(function(param, _){
         if (param.type !== 'id') {
             throw new SyntaxError("illegal argument name : " + param);
         }
@@ -162,7 +161,7 @@ function parseLambda(tuple) {
     });
 
     statements = doParseList(aps.call(elements, 2));
-    return {type: 'lambda', params: paramNames, body: {type: 'block', statements: statements }, scope: Scope()};
+    return {type: 'lambda', params: paramNames, body: {type: 'block', statements: statements }};
 }
 
 
@@ -235,7 +234,7 @@ function parse(code) {
 }
 
 function interpret(node, scope) {
-    var results, ret;
+    var ret;
     if (node.map && node.reduce && node.forEach) {// Array
         return node.map(function(e, _){
             return interpret(e, scope);
@@ -245,10 +244,9 @@ function interpret(node, scope) {
             case 'def':
                 return scope.define(node.pattern.value, interpret(node.value, scope));
             case 'block':
-                results = node.statements.map(function (statement, _) {
+                return node.statements.map(function (statement, _) {
                     return interpret(statement, scope)
-                });
-                return results[results.length - 1];
+                }).slice(-1)[0];
             case 'apply':
                 var fn = interpret(node.func, scope),
                     args = interpret(node.args, scope),
@@ -272,7 +270,6 @@ function interpret(node, scope) {
                 return interpret(node.predicate, scope) ? interpret(node.conseq, scope) : interpret(node.alter, scope);
             case 'cond':
                 ret = undefined;
-                console.log(JSON.stringify(node.clauses));
                 some.call(node.clauses, function(clause){
                     var predicate = interpret(clause.predicate, scope);
                     if (predicate) {
@@ -293,9 +290,6 @@ function interpret(node, scope) {
     }
 }
 
-
-var ast = parse("(((lambda (x) (lambda (y) (+ x y))) 2) 3)");
-//var ast = parse("(+ 1 2) (+ 3 4)");
 var env = Scope();
 env.define('+', function(){
     return reduce.call(arguments, function(ret, o){
@@ -327,15 +321,22 @@ env.define('println', function(){
     console.log.apply(this, arguments);
 });
 
+function eval(code) {
+    return interpret(parse(code), env);
+}
 
-console.log(interpret(ast, env));
 
-interpret(parse('(if (> 2 1) (println "2 > 1") (println "2 <= 1"))'), env);
-interpret(parse('(def x 100)'), env);
-interpret(parse('(cond ((< x 0) (println "< 0")) ((< x 100) (println "< 100")) (t (println "Unknown")))'), env);
+var val = eval("(((lambda (x) (lambda (y) (- x y))) 5) 2)");
+console.log(val);
 
-//console.log(JSON.stringify(parse("(+ (+ 1 2) (+ 3 4))")));
-console.log(JSON.stringify(parse("(define f (lambda (x y) (- x y)))")));
-console.log(JSON.stringify(parse("(((lambda (x) (lambda (y) (+ x y))) 2) 3)")));
+eval('(if (> 2 1) (println "2 > 1") (println "2 <= 1"))');
+eval('(def x 80)');
+eval('(cond ((< x 0) (println "< 0")) ((< x 100) (println "< 50")) ((< 100) (println "< 100")) (t (println "Unknown")))');
 
-console.log(JSON.stringify(parse("(+ 1 2) (+ 3 4)")));
+console.log("x = ", eval('x'));
+
+// A Example of dynamic scope vs lexical scope
+eval('(def sub5 ((lambda (x) (lambda (y) (- y x))) 5))');
+console.log("x = ", eval('x'));
+console.log(eval('(sub5 100)'));  //80 or 95?
+
