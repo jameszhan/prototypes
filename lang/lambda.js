@@ -192,7 +192,7 @@ function Scope(parent){
 
 var env = Scope();
 env.define('inc', function(v){
-    return v ? v + "A" : "A";
+    return v ? v + 1 : 1;
 });
 
 
@@ -216,17 +216,17 @@ eval('(def + (lambda (m) (lambda (n) (lambda (f) (lambda (x) ((m f) ((n f) x))))
 eval('(def * (lambda (m) (lambda (n) (lambda (f) (n (m f))))))');
 eval('(def ** (lambda (a) (lambda (n) (n a))))'); // exp
 
-eval('(def church->str (lambda (n) ((n (lambda (x) (inc x))) "")))');
+eval('(def church->int (lambda (n) ((n (lambda (x) (inc x))) "")))');
 
 function log(code) {
     console.log(code, "-> ", eval(code));
 }
 
-log('(church->str 0)');
-log('(church->str 1)');
-log('(church->str 8)');
+log('(church->int 0)');
+log('(church->int 1)');
+log('(church->int 8)');
 
-log('(church->str ((+ 1) 2))');
-log('(church->str ((* 2) 3))');
-log('(church->str ((** 2) 3))');
+log('(church->int ((+ 1) 2))');
+log('(church->int ((* 2) 3))');
+log('(church->int ((** 2) 3))');
 
