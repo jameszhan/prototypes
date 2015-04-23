@@ -191,21 +191,15 @@ function Scope(parent){
 }
 
 var env = Scope();
-
-env.define('println', function(){
-    console.log.apply(this, arguments);
+env.define('inc', function(v){
+    return v ? v + "A" : "A";
 });
-
-env.define('inc', function(){
-    //console.log(arguments);
-    return 'A';
-});
-
 
 
 function eval(code) {
     return interpret(parse(code), env);
 }
+//(defn zero [f] (fn [x] x))
 
 eval('(def 0 (lambda (f) (lambda (x) x)))');
 eval('(def succ (lambda (n) (lambda (f) (lambda (x) (f ((n f) x))))))');
@@ -222,20 +216,17 @@ eval('(def + (lambda (m) (lambda (n) (lambda (f) (lambda (x) ((m f) ((n f) x))))
 eval('(def * (lambda (m) (lambda (n) (lambda (f) (n (m f))))))');
 eval('(def ** (lambda (a) (lambda (n) (n a))))'); // exp
 
-eval('(def church->int (lambda (n) ((n inc) "")))');
+eval('(def church->str (lambda (n) ((n (lambda (x) (inc x))) "")))');
 
-console.log(eval('(church->int 0)'));
-//console.log(eval('(church->int 1)'));
-console.log(eval('(church->int 8)'));
+function log(code) {
+    console.log(code, "-> ", eval(code));
+}
 
-//
-//console.log(eval('(((lambda (x) (lambda (y) (- y x))) 5) 20)'));
-//eval('(def add (lambda (x) (lambda (y) (+ x y))))');
-//eval('(def add5 (add 5))');
-//console.log(eval('(add5 10)'));
-//console.log(eval('(add5 30)'));
-//
-//eval('(def Y (lambda (f) ((lambda (g) (g g)) (lambda (x) (lambda (args) ((f (x x)) args))))))');
-//eval('(def fac-gen (lambda (f) (lambda (n) (if (<= n 0) 1 (* n (f (- n 1)))))))');
-//console.log(eval('((Y fac-gen) 1)'));
+log('(church->str 0)');
+log('(church->str 1)');
+log('(church->str 8)');
+
+log('(church->str ((+ 1) 2))');
+log('(church->str ((* 2) 3))');
+log('(church->str ((** 2) 3))');
 
