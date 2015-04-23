@@ -10,7 +10,7 @@
 
 var toString = Object.prototype.toString,
     aps = Array.prototype.slice;
-reduce = Array.prototype.reduce;
+    reduce = Array.prototype.reduce;
 
 function isArray(value) { return toString.call(value) === '[object Array]'; }
 

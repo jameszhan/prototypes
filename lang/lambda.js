@@ -228,5 +228,3 @@ log('(church->int ((+ 1) 2))');
 log('(church->int ((* 2) 3))');
 log('(church->int ((** 2) 3))');
 
-
-
