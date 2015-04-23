@@ -194,7 +194,9 @@ var env = Scope();
 env.define('inc', function(v){
     return v ? v + 1 : 1;
 });
-
+env.define('println', function(){
+    console.log.apply(this, arguments);
+});
 
 function eval(code) {
     return interpret(parse(code), env);
@@ -222,6 +224,9 @@ function log(code) {
     console.log(code, "-> ", eval(code));
 }
 
+// do 3 times println
+eval('((3 (lambda (x) (println "Hello World"))))');
+
 log('(church->int 0)');
 log('(church->int 1)');
 log('(church->int 8)');
@@ -229,4 +234,6 @@ log('(church->int 8)');
 log('(church->int ((+ 1) 2))');
 log('(church->int ((* 2) 3))');
 log('(church->int ((** 2) 3))');
+
+
 
