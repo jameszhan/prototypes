@@ -1,12 +1,14 @@
-// λ演算规则
-// <expression> := <name> | <function> | <application>
-// <function> := λ<name>.<expression>
-// <application> := <expression><expression>
-
-// expression := <name> | <function> | <application>
-// name := \w+
-// function := (lambda (name) expression)
-// application := (expression expression)
+// Lambda Calculus？
+//
+// 现在让我们过渡到一种更强大的语言：lambda calculus。它虽然名字看起来很吓人，但是其实非常简单。它的三个元素分别是是：变量，函数，调用。用传统的表达法，它们看起来就是：
+// 变量：x
+// 函数：λx.t
+// 调用：t1 t2
+//
+// 每个程序语言里面都有这三个元素，只不过具体的语法不同，所以你其实每天都在使用 lambda calculus。用 Scheme 作为例子，这三个元素看起来就像：
+// 变量：x
+// 函数：(lambda (x) e)
+// 调用：(e1 e2)
 
 var toString = Object.prototype.toString,
     aps = Array.prototype.slice;
@@ -88,8 +90,6 @@ function doParse(node) {
             switch(head) {
                 case 'def':
                     return parseDef(node);
-                case 'if':
-                    return parseIf(node);
                 case 'lambda':
                     return parseLambda(node);
                 default:
@@ -214,7 +214,7 @@ eval('(def ** (lambda (a) (lambda (n) (n a))))'); // exp
 eval('(def church->int (lambda (n) ((n (lambda (x) (inc x))) "")))');
 
 function log(code) {
-    console.log(code, "-> ", eval(code));
+    console.log(code, "-> ", JSON.stringify(eval(code)));
 }
 
 // do 3 times println
@@ -227,4 +227,37 @@ log('(church->int 8)');
 log('(church->int ((+ 1) 2))');
 log('(church->int ((* 2) 3))');
 log('(church->int ((** 2) 3))');
+
+// 类型及不变式
+//    TRUE := λx.λy.x
+//    FALSE := λx.λy.y
+//
+//    AND := λp q.p q FALSE
+//    OR := λp q.p TRUE q
+//    NOT := λp.p FALSE TRUE
+//    IFTHENELSE := λp x y.p x y
+
+
+eval('(def true (lambda (x) (lambda (y) x)))');
+eval('(def false (lambda (x) (lambda (y) y)))');
+eval('(def and (lambda (p) (lambda (q) ((p q) false))))');
+eval('(def or (lambda (p) (lambda (q) ((p true) q))))');
+eval('(def not (lambda (p) ((p false) true)))))');
+eval('(def if (lambda (p) (lambda (x) (lambda (y) ((p x) y)))))');
+
+//    CONS := λx y.λp.IF p x y
+//    CAR := λx.x TRUE
+//    CDR := λx.x FALSE
+eval('(def cons (lambda (x y) (lambda (p) (((if p) x) y)))))');
+eval('(def car (lambda (cons) (cons true)))');
+eval('(def cdr (lambda (cons) (cons false)))');
+
+eval('(def a (cons 1 (cons 2 (cons 3 (cons 4 (cons 5 0))))))');
+
+log('(church->int (car a))');
+log('(church->int (car (cdr a)))');
+log('(church->int (car (cdr (cdr a))))')
+
+
+
 
