@@ -74,6 +74,13 @@ function parseDef(node) {
     return {type: 'def', pattern: doParse(node[1]), value: doParse(node[2])}
 }
 
+function parseIf(node) {
+    if (node.length !== 4) {
+        throw new SyntaxError("incorrect format of if" + node);
+    }
+    return {type: 'if', predicate: doParse(node[1]), conseq: doParse(node[2]), alter: doParse(node[3])};
+}
+
 function doParseList(nodes) {
     return nodes.map(function(node, _){ return doParse(node); });
 }
@@ -88,6 +95,8 @@ function doParse(node) {
             switch(head) {
                 case 'def':
                     return parseDef(node);
+                case 'if':
+                    return parseIf(node);
                 case 'lambda':
                     return parseLambda(node);
                 default:
@@ -147,14 +156,11 @@ function interpret(node, scope) {
             default:
                 if (node[0] === '"' && node.slice(-1) === '"') {
                     return node.slice(1, -1);
-                } else if (!isNaN(parseFloat(node))) {
-                    return parseFloat(node);
                 } else {
                     if (scope.defined(node)) {
                         return scope.lookup(node);
                     } else {
-                        //console.log(JSON.stringify(scope.trace()));
-                        throw new EvalError("Unknown variable " + node);
+                        throw new EvalError("Unknown variable " + JSON.stringify(node));
                     }
                 }
         }
@@ -185,43 +191,51 @@ function Scope(parent){
 }
 
 var env = Scope();
-env.define('+', function(){
-    return reduce.call(arguments, function(ret, o){
-        return ret + o;
-    }, 0);
-});
-env.define('-', function(){
-    if (arguments.length > 0) {
-        return reduce.call(arguments, function(ret, o){
-            return ret - o;
-        }, arguments[0] * 2);
-    }
-    return 0;
-});
-
-env.define('>', function(a, b){
-    return a > b;
-});
-
-env.define('<', function(a, b){
-    return a < b;
-});
-
-env.define('t', function(){
-    return true;
-});
 
 env.define('println', function(){
     console.log.apply(this, arguments);
 });
 
+env.define('inc', function(){
+    //console.log(arguments);
+    return 'A';
+});
+
+
+
 function eval(code) {
     return interpret(parse(code), env);
 }
 
-console.log(eval('(((lambda (x) (lambda (y) (- y x))) 5) 20)'));
-eval('(def add (lambda (x) (lambda (y) (+ x y))))');
-eval('(def add5 (add 5))');
-console.log(eval('(add5 10)'));
-console.log(eval('(add5 30)'));
+eval('(def 0 (lambda (f) (lambda (x) x)))');
+eval('(def succ (lambda (n) (lambda (f) (lambda (x) (f ((n f) x))))))');
+eval('(def 1 (succ 0))');
+eval('(def 2 (succ 1))');
+eval('(def 3 (succ 2))');
+eval('(def 4 (succ 3))');
+eval('(def 5 (succ 4))');
+eval('(def 6 (succ 5))');
+eval('(def 7 (succ 6))');
+eval('(def 8 (succ 7))');
+eval('(def 9 (succ 8))');
+eval('(def + (lambda (m) (lambda (n) (lambda (f) (lambda (x) ((m f) ((n f) x)))))))');
+eval('(def * (lambda (m) (lambda (n) (lambda (f) (n (m f))))))');
+eval('(def ** (lambda (a) (lambda (n) (n a))))'); // exp
+
+eval('(def church->int (lambda (n) ((n inc) "")))');
+
+console.log(eval('(church->int 0)'));
+//console.log(eval('(church->int 1)'));
+console.log(eval('(church->int 8)'));
+
+//
+//console.log(eval('(((lambda (x) (lambda (y) (- y x))) 5) 20)'));
+//eval('(def add (lambda (x) (lambda (y) (+ x y))))');
+//eval('(def add5 (add 5))');
+//console.log(eval('(add5 10)'));
+//console.log(eval('(add5 30)'));
+//
+//eval('(def Y (lambda (f) ((lambda (g) (g g)) (lambda (x) (lambda (args) ((f (x x)) args))))))');
+//eval('(def fac-gen (lambda (f) (lambda (n) (if (<= n 0) 1 (* n (f (- n 1)))))))');
+//console.log(eval('((Y fac-gen) 1)'));
 
