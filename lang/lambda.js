@@ -74,13 +74,6 @@ function parseDef(node) {
     return {type: 'def', pattern: doParse(node[1]), value: doParse(node[2])}
 }
 
-function parseIf(node) {
-    if (node.length !== 4) {
-        throw new SyntaxError("incorrect format of if" + node);
-    }
-    return {type: 'if', predicate: doParse(node[1]), conseq: doParse(node[2]), alter: doParse(node[3])};
-}
-
 function doParseList(nodes) {
     return nodes.map(function(node, _){ return doParse(node); });
 }
