@@ -170,14 +170,6 @@ function doParseList(nodes) {
     return nodes.map(function(node, _){ return doParse(node); });
 }
 
-
-//Quote
-//Atom
-//Eq
-//Car
-//Cdr
-//Cons
-//Cond
 function doParse(tuple) {
     var head, elements;
     if (tuple.type !== 'tuple') {

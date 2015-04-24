@@ -265,7 +265,6 @@ log('(assert-equals (not true) false)');
 log('(assert-equals (((if true) 3) 5) 3)');
 log('(assert-equals (((if false) 3) 5) 5)');
 
-
 //    CONS := λx y.λp.IF p x y
 //    CAR := λx.x TRUE
 //    CDR := λx.x FALSE
