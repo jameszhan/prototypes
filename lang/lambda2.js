@@ -46,8 +46,8 @@ function preprocess(tokens) {
 }
 
 function parseLambda(node) {
-    var params, paramNames, statements;
-    if (node.length < 3) {
+    var params, paramNames;
+    if (node.length !== 3) {
         throw new SyntaxError("syntax error in function definition" + node);
     }
     params = node[1];
@@ -60,9 +60,7 @@ function parseLambda(node) {
         }
         return param;
     });
-
-    statements = doParseList(aps.call(node, 2));
-    return {type: 'lambda', params: paramNames, body: {type: 'block', statements: statements }};
+    return {type: 'lambda', params: paramNames, body: doParse(node[2])};
 }
 
 function parseApply(node) {
@@ -115,44 +113,30 @@ function parse(code) {
 }
 
 function interpret(node, scope) {
-    if (node.map && node.reduce && node.forEach) { // Array
-        return node.map(function(e, _){
-            return interpret(e, scope);
-        });
-    } else {
-        switch (node.type) {
-            case 'def':
-                return scope.define(node.pattern, interpret(node.value, scope));
-            case 'block':
-                return node.statements.map(function (statement, _) {
-                    return interpret(statement, scope)
-                }).slice(-1)[0];
-            case 'apply':
-                var closure = interpret(node.func, scope),
-                    args = interpret(node.args, scope),
-                    newScope;
-                if (closure.type === 'closure') { // Lambda
-                    newScope = closure.fn.params.reduce(function(ctx, param, i) {
-                        ctx.define(param, args[i]);
-                        return ctx;
-                    }, closure.env.copy()); // scope.copy() static scope vs. dynamic scope
-                    return interpret(closure.fn.body, newScope);
-                } else { //BuiltIn Function
-                    return closure.apply(scope, args);
-                }
-            case 'lambda':
-                return {type: 'closure', fn: node, env: scope};
-            default:
-                if (node[0] === '"' && node.slice(-1) === '"') {
-                    return node.slice(1, -1);
-                } else {
-                    if (scope.defined(node)) {
-                        return scope.lookup(node);
-                    } else {
-                        throw new EvalError("Unknown variable " + JSON.stringify(node));
-                    }
-                }
-        }
+    switch (node.type) {
+        case 'def':
+            return scope.define(node.pattern, interpret(node.value, scope));
+        case 'apply':
+            var closure = interpret(node.func, scope),
+                args = node.args.map(function(arg) { return interpret(arg, scope); }),
+                newScope;
+            if (closure.type === 'closure') { // Lambda
+                newScope = closure.fn.params.reduce(function(ctx, param, i) {
+                    ctx.define(param, args[i]);
+                    return ctx;
+                }, closure.env.copy()); // scope.copy() static scope vs. dynamic scope
+                return interpret(closure.fn.body, newScope);
+            } else { //BuiltIn Function
+                return closure.apply(scope, args);
+            }
+        case 'lambda':
+            return {type: 'closure', fn: node, env: scope};
+        default:
+            if (scope.defined(node)) {
+                return scope.lookup(node);
+            } else {
+                throw new EvalError("Unknown variable " + JSON.stringify(node));
+            }
     }
 }
 
@@ -186,6 +170,7 @@ env.define('inc', function(v){
 env.define('println', function(){
     console.log.apply(this, arguments);
 });
+env.define('null', null);
 
 function eval(code) {
     return interpret(parse(code), env);
@@ -207,14 +192,14 @@ eval('(def + (lambda (m) (lambda (n) (lambda (f) (lambda (x) ((m f) ((n f) x))))
 eval('(def * (lambda (m) (lambda (n) (lambda (f) (n (m f))))))');
 eval('(def ** (lambda (a) (lambda (n) (n a))))'); // exp
 
-eval('(def church->int (lambda (n) ((n (lambda (x) (inc x))) "")))');
+eval('(def church->int (lambda (n) ((n (lambda (x) (inc x))) null)))');
 
 function log(code) {
     console.log(code, "-> ", JSON.stringify(eval(code)));
 }
 
 // do 3 times println
-eval('((3 (lambda (x) (println "Hello World"))))');
+eval('((3 (lambda (x) (println (church->int 5)))))');
 
 log('(church->int 0)');
 log('(church->int 1)');
@@ -264,6 +249,7 @@ log('(assert-equals (not true) false)');
 
 log('(assert-equals (((if true) 3) 5) 3)');
 log('(assert-equals (((if false) 3) 5) 5)');
+
 
 
 //    CONS := λx y.λp.IF p x y
