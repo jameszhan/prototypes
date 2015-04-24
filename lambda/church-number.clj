@@ -10,7 +10,6 @@
 (defn three [f x] (f (f (f x))))
 
 
-
 (defn plus [m n] (fn [f x] (m f (n f x))))
 ;(defn mult [m n] (fn [f x] (n #(m f %) x)))
 (defn mult [m n] (fn [f x] (n (partial m f) x)))
