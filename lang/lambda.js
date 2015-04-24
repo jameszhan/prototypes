@@ -143,7 +143,7 @@ function interpret(node, scope) {
             case 'lambda':
                 return {type: 'closure', fn: node, env: scope};
             default:
-                if (node[0] === '"' && node.slice(-1) === '"') {
+                if (node[0] === '"' && node.slice(-1) === '"') { //string
                     return node.slice(1, -1);
                 } else {
                     if (scope.defined(node)) {
