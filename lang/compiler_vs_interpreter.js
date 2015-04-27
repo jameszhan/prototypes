@@ -1,6 +1,6 @@
-// Expression ::= Term | Term '+|-' Expression
-// Term ::= Primary | Primary '*|/' Term
-// Primary ::= Number | '(' Expression ')'
+// Expression ::= Term | Expression '+|-' Term
+// Term ::= Primary | Term '*|/' Primary
+// Primary_Expression ::= DOUBLE_LITERAL | '(' Expression ')' | '-' Primary_Expression
 
 function parseExpression(tokens) {
     var v1, v2, token;
@@ -45,6 +45,9 @@ function parsePrimary(tokens) {
             throw new SyntaxError("unclosed delimeter till end of file: " + JSON.stringify(token));
         }
         return value;
+    } else if (token.value === '-') {
+        value = parsePrimary(tokens);
+        return {type: 'negative', value: value}
     } else {
         throw new SyntaxError("Unknown token " + JSON.stringify(token) + " in Primary.");
     }
@@ -83,6 +86,8 @@ function travel(ast, visitor) {
     switch (type) {
         case 'number':
             return visitor.visitNumber(ast.value);
+        case 'negative':
+            return visitor.visitNegative(travel(ast.value, visitor));
         case 'op':
             return visitor.visitOp(ast.value, travel(ast.v1, visitor), travel(ast.v2, visitor));
         default :
@@ -94,6 +99,9 @@ function interpret(ast) {
     var visitor = {
         visitNumber: function(value) {
             return value;
+        },
+        visitNegative: function(value) {
+            return -value;
         },
         visitOp: function(op, v1, v2) {
             switch (op) {
@@ -120,6 +128,9 @@ function compile(ast) {
             visitNumber: function(number) {
                 code.push("ds.push(" + number + ")");
             },
+            visitNegative: function(value) {
+                code.push("ds.push(-ds.pop())");
+            },
             visitOp: function(op, v1, v2){
                 code.push("ds.push(ds.pop() " + op + " ds.pop())");
             }
@@ -139,7 +150,7 @@ var vm = (function(){
 })();
 
 
-var expression = "3 * (2 + 1) * 8 + 9 * 3";
+var expression = "3 * -(8 + -2)";
 var v = interpret(parse(expression));
 console.log(v);
 var code = compile(parse(expression));
