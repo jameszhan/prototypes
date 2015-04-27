@@ -42,7 +42,7 @@ function parsePrimary(tokens) {
         value = parseExpression(tokens);
         token = tokens.shift();
         if (token === undefined || token.type !== ')') {
-            throw new SyntaxError("unclosed delimeter till end of file: " + token);
+            throw new SyntaxError("unclosed delimeter till end of file: " + JSON.stringify(token));
         }
         return value;
     } else {
@@ -78,57 +78,70 @@ function parse(code) {
     return parseExpression(tokens);
 }
 
-
-function interpret(ast) {
+function travel(ast, visitor) {
     var type = ast.type;
     switch (type) {
         case 'number':
-            return ast.value;
+            return visitor.visitNumber(ast.value);
         case 'op':
-            switch (ast.value) {
+            return visitor.visitOp(ast.value, travel(ast.v1, visitor), travel(ast.v2, visitor));
+        default :
+            throw new EvalError("Unknown ast node: " + ast);
+    }
+}
+
+function interpret(ast) {
+    var visitor = {
+        visitNumber: function(value) {
+            return value;
+        },
+        visitOp: function(op, v1, v2) {
+            switch (op) {
                 case '+':
-                    return interpret(ast.v1) + interpret(ast.v2);
+                    return v1 + v2;
                 case '-':
-                    return interpret(ast.v1) - interpret(ast.v2);
+                    return v1 - v2;
                 case '*':
-                    return interpret(ast.v1) * interpret(ast.v2);
+                    return v1 * v2;
                 case '/':
-                    return interpret(ast.v1) / interpret(ast.v2);
+                    return v1 / v2;
                 default :
                     throw new EvalError("Unknown operator: " + ast.value);
             }
-        default :
-            throw new EvalError("Unknown ast node: " + ast);
-    }
+        }
+    };
+    return travel(ast, visitor);
 }
+
 
 function compile(ast) {
-    var type = ast.type;
-    switch (type) {
-        case 'number':
-            return "ds.push(" + ast.value + ")\n";
-        case 'op':
-            return compile(ast.v1) + compile(ast.v2) + "ds.push(ds.pop() " + ast.value + " ds.pop())\n";
-        default :
-            throw new EvalError("Unknown ast node: " + ast);
-    }
+    var code = [],
+        visitor = {
+            visitNumber: function(number) {
+                code.push("ds.push(" + number + ")");
+            },
+            visitOp: function(op, v1, v2){
+                code.push("ds.push(ds.pop() " + op + " ds.pop())");
+            }
+        };
+    travel(ast, visitor);
+    return code.join("\n");
 }
 
-var vm = function(){
+var vm = (function(){
     var initDs = "var ds = []\n",
-        popDs = "ds.pop()\n";
+        popDs = "\nds.pop()\n";
     return {
         exec: function(code){
             return eval(initDs + code + popDs);
         }
     };
-}();
+})();
 
 
-var expression = "3 * (2 + 1)";
+var expression = "3 * (2 + 1) * 8 + 9 * 3";
 var v = interpret(parse(expression));
 console.log(v);
 var code = compile(parse(expression));
+console.log(code);
 console.log(vm.exec(code));
-
-
