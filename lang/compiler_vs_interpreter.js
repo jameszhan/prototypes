@@ -6,14 +6,12 @@ function parseExpression(tokens) {
     var v1, v2, token;
     v1 = parseTerm(tokens);
     token = tokens.shift();
-    console.log("v1 in expression: ", v1, ", token: ", token);
     if (token === undefined) {
         return v1;
     } else if (token.type === 'plus') {
         v2 = parseExpression(tokens);
         return {type: 'op', value: token.value, v1: v1, v2: v2};
     } else {
-        console.warn("token in experssion: ", token);
         tokens.unshift(token);
         return v1;
     }
@@ -29,7 +27,6 @@ function parseTerm(tokens){
         v2 = parseTerm(tokens);
         return {type: 'op', value: token.value, v1: v1, v2: v2};
     } else {
-        console.warn("token in term: ", token);
         tokens.unshift(token);
         return v1;
     }
@@ -40,7 +37,7 @@ function parsePrimary(tokens) {
     if (token === undefined) {
         throw new SyntaxError("Primary can't be null.");
     } else if (token.type === 'number') {
-        return token.value;
+        return {type: 'number', value: token.value};
     } else if (token.type === '(') {
         value = parseExpression(tokens);
         token = tokens.shift();
@@ -78,45 +75,60 @@ function parse(code) {
             throw new SyntaxError("Unknow token: " + input);
         }
     });
-    console.log(tokens);
     return parseExpression(tokens);
 }
 
-var ast = parse("(1 + 2)");
-//var ast = parse("1 + 2 * 3)");
-console.log(ast);
 
-//function compile(node) {
-//    switch (node.type) {
-//        case 'number':
-//            return "ds.push(" + node.value + ")\n";
-//        case 'operator':
-//            return compile(node.children[0]) + compile(node.children[1]) + "ds.push(ds.pop() " + node.value + " ds.pop())\n";
-//        default:
-//            return "Unknown Node: " + node;
-//    }
-//}
-//
-//var ast = parse('1+2-3+4-5+6');
-//var code = compile(ast);
-//console.log(code);
-//eval("var ds = [];" + code);
-//
-//
-//function interpret(node) {
-//    switch (node.type) {
-//        case 'number':
-//            return +node.value;
-//        case 'operator':
-//            if (node.value == '+') {
-//                return interpret(node.children[0]) + interpret(node.children[1]);
-//            } else {
-//                return interpret(node.children[0]) - interpret(node.children[1]);
-//            }
-//        default:
-//            return "Unknown Node: " + node;
-//    }
-//}
-//
-//var val = interpret(ast);
-//console.log(val);
+function interpret(ast) {
+    var type = ast.type;
+    switch (type) {
+        case 'number':
+            return ast.value;
+        case 'op':
+            switch (ast.value) {
+                case '+':
+                    return interpret(ast.v1) + interpret(ast.v2);
+                case '-':
+                    return interpret(ast.v1) - interpret(ast.v2);
+                case '*':
+                    return interpret(ast.v1) * interpret(ast.v2);
+                case '/':
+                    return interpret(ast.v1) / interpret(ast.v2);
+                default :
+                    throw new EvalError("Unknown operator: " + ast.value);
+            }
+        default :
+            throw new EvalError("Unknown ast node: " + ast);
+    }
+}
+
+function compile(ast) {
+    var type = ast.type;
+    switch (type) {
+        case 'number':
+            return "ds.push(" + ast.value + ")\n";
+        case 'op':
+            return compile(ast.v1) + compile(ast.v2) + "ds.push(ds.pop() " + ast.value + " ds.pop())\n";
+        default :
+            throw new EvalError("Unknown ast node: " + ast);
+    }
+}
+
+var vm = function(){
+    var initDs = "var ds = []\n",
+        popDs = "ds.pop()\n";
+    return {
+        exec: function(code){
+            return eval(initDs + code + popDs);
+        }
+    };
+}();
+
+
+var expression = "3 * (2 + 1)";
+var v = interpret(parse(expression));
+console.log(v);
+var code = compile(parse(expression));
+console.log(vm.exec(code));
+
+
