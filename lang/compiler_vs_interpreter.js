@@ -139,6 +139,35 @@ function compile(ast) {
     return code.join("\n");
 }
 
+function printAST(ast) {
+    var visitor = {
+        visitNumber: function(number) {
+            return number;
+        },
+        visitNegative: function(value) {
+            return ['-', value];
+        },
+        visitOp: function(op, v1, v2){
+            return [op, v1, v2];
+        }
+    }, graph = function(node, i) {
+        var indent = '';
+        for (var j = 0; j < i; j++){
+            indent += "\t";
+        }
+        if (node.forEach && node.map && node.reduce) { //isArray
+            var op = node[0];
+            console.log(indent, op);
+            node.slice(1).forEach(function(e){
+                graph(e, i + 1);
+            });
+        } else {
+            console.log(indent, node);
+        }
+    };
+    return graph(travel(ast, visitor), 0);
+}
+
 var vm = (function(){
     var initDs = "var ds = []\n",
         popDs = "\nds.pop()\n";
@@ -156,3 +185,10 @@ console.log(v);
 var code = compile(parse(expression));
 console.log(code);
 console.log(vm.exec(code));
+
+function log(value) {
+    console.log(JSON.stringify(value));
+}
+
+printAST(parse(expression));
+printAST(parse("(2 + 3) * (5 + 6)"));
