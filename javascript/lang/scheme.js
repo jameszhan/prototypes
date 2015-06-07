@@ -11,6 +11,7 @@
 var toString = Object.prototype.toString,
     aps = Array.prototype.slice,
     reduce = Array.prototype.reduce,
+    some = Array.prototype.some,
     readMacros = {
         "'": 'quote',
         '`': 'syntax-quote',
@@ -56,7 +57,7 @@ function parseBlock(node){
 }
 
 function parseLambda(node) {
-    var params, paramNames, expressions;
+    var params, paramNames;
     if (node.length < 3) {
         throw new SyntaxError("syntax error in function definition" + node);
     }
@@ -92,6 +93,26 @@ function parseIf(node) {
     return {type: 'if', predicate: doParse(node[1]), conseq: doParse(node[2]), alter: doParse(node[3])};
 }
 
+function parseQuote(node) {
+    return {type: 'quote', value: node[1]}
+}
+
+function parseCond(node) {
+    if (node.length < 2) {
+        throw new SyntaxError("incorrect format of cond definition " + tuple);
+    }
+    return {type: 'cond', clauses: reduce.call(aps.call(node, 1), function(ctx, el, i){
+        if (el.length !== 2) {
+            throw new SyntaxError("incorrect format of definition " + el);
+        }
+        ctx.push({predicate: doParse(el[0]), conseq: doParse(el[1])});
+        return ctx;
+    }, [])};
+}
+
+
+
+
 function doParseList(nodes) {
     return nodes.map(function(node, _){ return doParse(node); });
 }
@@ -119,6 +140,10 @@ function doParse(node) {
                     return parseIf(node);
                 case 'lambda':
                     return parseLambda(node);
+                case 'quote':
+                    return parseQuote(node);
+                case 'cond':
+                    return parseCond(node);
                 default:
                     return parseApply(node);
             }
@@ -176,6 +201,18 @@ function interpret(node, scope) {
                 }
             case 'lambda':
                 return {type: 'closure', fn: node, env: scope};
+            case 'quote':
+                return node.value;
+            case 'cond':
+                var ret = undefined;
+                some.call(node.clauses, function(clause){
+                    var predicate = interpret(clause.predicate, scope);
+                    if (predicate) {
+                        ret = interpret(clause.conseq, scope);
+                        return true;
+                    }
+                });
+                return ret;
             default:
                 if (node[0] === '"' && node.slice(-1) === '"') {
                     return node.slice(1, -1);
@@ -191,6 +228,8 @@ function interpret(node, scope) {
         }
     }
 }
+
+
 
 
 function Scope(parent){
@@ -281,6 +320,8 @@ log('(add5 10)');
 log('(add5 30)');
 log('(add5 15) (add5 20)');
 log('(seq (add5 15) (add5 20))');
+
+log("(cond ((> 2 1) '(a 2 3)))");
 
 //
 //;;快速排序
