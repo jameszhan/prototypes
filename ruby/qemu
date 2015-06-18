@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+
+require 'thor'
+
+class Qemu < Thor
+  desc 'img 1G', 'Create virtual hard disk.'
+  def img(path, size)
+    cmd = "qemu-img create -f raw #{path} #{size}"
+    say cmd, :green, true
+    system cmd
+  end
+
+  desc "to_gbk a.txt --from=UTF-8", "Transform file form FROM to GBK"
+  option :from, default: 'UTF-8'
+  option :to, default: 'GBK'
+  def to_gbk(input, output=nil)
+    encode(input, output)
+  end
+
+  desc "to_utf8 a.txt --from=UTF-8", "Transform file form FROM to UTF-8"
+  option :from, default: 'GBK'
+  option :to, default: 'UTF-8'
+  def to_utf8(input, output=nil)
+    encode(input, output)
+  end
+
+end
+
+Qemu.start(ARGV)
+
+
