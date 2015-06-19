@@ -1,0 +1,8 @@
+source 'https://ruby.taobao.org/'
+
+gem 'sshkit'
+gem 'thor'
+gem 'nokogiri'
+
+gem 'sinatra'
+gem 'data_mapper'
