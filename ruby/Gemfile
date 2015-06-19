@@ -6,3 +6,5 @@ gem 'nokogiri'
 
 gem 'sinatra'
 gem 'data_mapper'
+gem 'sqlite3'
+gem 'activerecord'

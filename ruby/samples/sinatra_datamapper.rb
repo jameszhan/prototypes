@@ -69,9 +69,9 @@ post.created_at = Time.now
 post.save
 
 Post.create(
-  :title      => 'Second Blog',
-  :body       => 'A lot of text ...',
-  :created_at => Time.now
+  title: 'Second Blog',
+  body: 'A lot of text ...',
+  created_at: Time.now
 )
 
 
