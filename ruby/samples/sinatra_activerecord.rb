@@ -9,20 +9,36 @@ ActiveRecord::Base.establish_connection(
   database: ':memory:'
 )
 
-ActiveRecord::Migrator.up 'db/migrate'
+# ActiveRecord::Migrator.up 'db/migrate'
+#
+# ActiveRecord::Schema.define do
+#   self.verbose = true
+#
+#   unless ActiveRecord::Base.connection.tables.include? 'posts'
+#     create_table :posts do |t|
+#       t.column :title,  :string
+#       t.column :body,   :text
+#       t.timestamps
+#     end
+#   end
+#
+#   unless ActiveRecord::Base.connection.tables.include? 'comments'
+#     create_table :comments do |t|
+#       t.column :posted_by,  :string
+#       t.column :email,      :string
+#       t.column :body,       :text
+#       t.timestamps
+#     end
+#   end
+# end
 
-ActiveRecord::Schema.define do
-  self.verbose = true
-
-  unless ActiveRecord::Base.connection.tables.include? 'posts'
+class InitialSchema < ActiveRecord::Migration
+  def self.up
     create_table :posts do |t|
       t.column :title,  :string
       t.column :body,   :text
       t.timestamps
     end
-  end
-
-  unless ActiveRecord::Base.connection.tables.include? 'comments'
     create_table :comments do |t|
       t.column :posted_by,  :string
       t.column :email,      :string
@@ -30,8 +46,14 @@ ActiveRecord::Schema.define do
       t.timestamps
     end
   end
+
+  def self.down
+    drop_table :posts
+    drop_table :comments
+  end
 end
 
+InitialSchema.migrate(:up)
 
 
 #Now you can create and use ActiveRecord models just like in Rails (the example assumes you already have a 'posts' table in your database):
