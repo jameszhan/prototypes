@@ -11,10 +11,10 @@ DataMapper.setup(:default, 'sqlite::memory:')
 
 class Post
   include DataMapper::Resource
-  property :id, Serial                    # An auto-increment integer key
-  property :title, String                 # A varchar type string, for short strings
-  property :body, Text                    # A text block, for longer string data.
-  property :created_at, DateTime          # A DateTime, for any date you might like.
+  property :id, Serial                                                  # An auto-increment integer key
+  property :title, String                                               # A varchar type string, for short strings
+  property :body, Text                                                  # A text block, for longer string data.
+  property :created_at, DateTime, default: lambda{|resource, props| Time.now }          # A DateTime, for any date you might like.
 
   has n, :comments
 
@@ -48,7 +48,7 @@ class Categorization
   include DataMapper::Resource
 
   property :id,         Serial
-  property :created_at, DateTime
+  property :created_at, DateTime, default: 'CURRENT_TIMESTAMP'
 
   belongs_to :category
   belongs_to :post
@@ -65,13 +65,11 @@ DataMapper.auto_upgrade!
 post = Post.new
 post.title = 'First Blog'
 post.body = 'Hello World!'
-post.created_at = Time.now
 post.save
 
 Post.create(
   title: 'Second Blog',
-  body: 'A lot of text ...',
-  created_at: Time.now
+  body: 'A lot of text ...'
 )
 
 

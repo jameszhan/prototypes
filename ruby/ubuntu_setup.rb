@@ -7,10 +7,11 @@ SSHKit.config.output_verbosity = :debug
 # 设置远程登陆面输入密码
 # cat ~/.ssh/id_rsa.pub | ssh james@10.211.55.5 'cat >> ~/.ssh/authorized_keys'
 # 使用root用户执行: `echo 'deploy ALL = (ALL) NOPASSWD: ALL' > /etc/sudoers.d/deploy`
+# ruby ubuntu_setup.rb 10.211.55.5 deploy PASSWD
 
-user = 'deploy'
-host = '10.211.55.5'
-password = ARGV[0]
+host = ARGV[0]
+user = ARGV[1]
+password = ARGV[2]
 
 passwd_handler = lambda do|ch, state, data|
   if state == :stderr

@@ -5,6 +5,7 @@ gem 'thor'
 gem 'nokogiri'
 
 gem 'sinatra'
+gem 'dm-sqlite-adapter'
 gem 'data_mapper'
 gem 'sqlite3'
 gem 'activerecord'
